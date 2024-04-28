@@ -4,46 +4,21 @@ import {
   matchedData,
   checkSchema,
 } from "express-validator";
-import {
-  createUserValidationSchemaForBody,
-  createUserValidationSchemaForQuery,
-} from "./src/utils/validationSchemas.mjs";
+import { createUserValidationSchemaForBody } from "./src/utils/validationSchemas.mjs";
+import usersRouter from "./src/routes/users.mjs";
+import { mockUsers } from "./src/utils/constants.mjs";
+import {resolveIndexByUserId, loggingMiddleware} from "./src/utils/middlewares.mjs"
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
+app.use(usersRouter);
 
-const loggingMiddleware = (request, response, next) => {
-  console.log(`${request.method} - ${request.url}`);
 
-  next();
-};
-const resolveIndexByUserId = (request, response, next) => {
-  const {
-    params: { id },
-  } = request;
-  const parsedId = parseInt(id);
-  if (isNaN(parsedId)) return response.sendStatus(400);
-  const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
-  if (findUserIndex === -1) return response.sendStatus(404);
-  // add property to the request object as it is the beauty of JavaScript
-  request.findUserIndex = findUserIndex;
-  next();
-};
 app.use(express.json());
 // globally used middleware. Middlewares must be registered before the route if we use app.use().
 // app.use(loggingMiddleware);
-
-const mockUsers = [
-  { id: 1, username: "anson", displayName: "Anson" },
-  { id: 2, username: "jack", displayName: "Jack" },
-  { id: 3, username: "adam", displayName: "Adam" },
-  { id: 4, username: "tina", displayName: "Tina" },
-  { id: 5, username: "jason", displayName: "Jason" },
-  { id: 6, username: "henry", displayName: "Henry" },
-  { id: 7, username: "marilyn", displayName: "Marilyn" },
-];
 
 // middleware passed as argument
 app.get("/", loggingMiddleware, (request, response) => {
@@ -74,74 +49,12 @@ app.get(
   }
 );
 
-app.get(
-  "/api/users",
-  checkSchema(createUserValidationSchemaForQuery),
-  (request, response) => {
-    // console.log(request["express-validator#contexts"]);
 
-    const data = matchedData(request);
-    // console.log(data);
-    const { filter, value } = data;
-    console.log(filter, value);
-    const result = validationResult(request);
-    if (!result.isEmpty()) {
-      return response.status(400).send({ errors: result.array() });
-    }
-    if (filter && value)
-      return response.send(
-        mockUsers.filter((user) => user[filter].includes(value))
-      );
-    return response.send(mockUsers);
-  }
-);
-
-app.get("/api/users/:id", resolveIndexByUserId, (request, response) => {
-  const { findUserIndex } = request;
-  const findUser = mockUsers[findUserIndex];
-  if (!findUser) return response.sendStatus(404);
-  return response.send(findUser);
-});
-
-app.post(
-  "/api/users",
-  checkSchema(createUserValidationSchemaForBody),
-  (request, response) => {
-    const result = validationResult(request);
-    // console.log(result);
-    if (!result.isEmpty()) {
-      return response.status(400).send({ errors: result.array() });
-    }
-    const data = matchedData(request);
-    // console.log(data)
-    // const { body } = request;
-    const newUser = { id: mockUsers[mockUsers.length - 1].id + 1, ...data };
-    mockUsers.push(newUser);
-    return response.status(201).send(newUser);
-  }
-);
 
 app.get("/api/products", (request, response) => {
   response.send([{ id: 123, name: "chicken breast", price: 12.99 }]);
 });
 
-app.put("/api/users/:id", resolveIndexByUserId, (request, response) => {
-  const { body, findUserIndex } = request;
-  mockUsers[findUserIndex] = { id: mockUsers[findUserIndex].id, ...body };
-  return response.sendStatus(200);
-});
-
-app.patch("/api/users/:id", resolveIndexByUserId, (request, response) => {
-  const { body, findUserIndex } = request;
-  mockUsers[findUserIndex] = { ...mockUsers[findUserIndex], ...body };
-  return response.sendStatus(200);
-});
-
-app.delete("/api/users/:id", resolveIndexByUserId, (request, response) => {
-  const { findUserIndex } = request;
-  mockUsers.splice(findUserIndex, 1);
-  return response.sendStatus(200);
-});
 
 app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`);
