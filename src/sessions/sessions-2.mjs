@@ -1,3 +1,6 @@
+// fake authentication system of session ID
+
+/*
 import express, { request, response } from "express";
 import routes from "./src/index.mjs";
 import cookieParser from "cookie-parser";
@@ -85,3 +88,27 @@ app.get("/api/cart", (request, response) => {
 app.listen(PORT, () => {
   console.log(`Running on Port ${PORT}`);
 });
+
+*/
+
+/*
+ request.sessionStore.get(request.sessionID, (err, session) => {
+    console.log(session);
+  });
+
+// the result of the console.log(session)
+  {
+  cookie: {
+    originalMaxAge: 3600000,
+    expires: '2024-05-02T04:08:38.066Z',
+    httpOnly: true,
+    path: '/'
+  },
+  user: {
+    id: 1,
+    username: 'anson',
+    displayName: 'Anson',
+    password: 'hello123'
+  }
+}
+*/

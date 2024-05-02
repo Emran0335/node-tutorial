@@ -22,6 +22,15 @@ router.get(
     .isLength({ min: 3, max: 10 })
     .withMessage("must be at least 3-10 characters"),
   (request, response) => {
+    console.log(request.session);
+    console.log(request.session.id);
+    request.sessionStore.get(request.session.id, (err, sessionData) => {
+      if (err) {
+        console.log(err);
+        throw err;
+      }
+      console.log(sessionData);
+    });
     // console.log(request["express-validator#contexts"]);
     const result = validationResult(request);
     console.log(result);
