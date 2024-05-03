@@ -1,6 +1,8 @@
 // fake authentication system of session ID
 
 /*
+
+// index.mjs
 import express, { request, response } from "express";
 import routes from "./src/index.mjs";
 import cookieParser from "cookie-parser";

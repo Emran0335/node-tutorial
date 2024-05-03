@@ -1,8 +1,9 @@
-import express, { request, response } from "express";
+import express, { response } from "express";
 import routes from "./src/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import { mockUsersConstants } from "./src/sessions/sessions-constants.mjs";
+import passport from "passport";
+import "./src/passport/local-strategy.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,66 +21,23 @@ app.use(
     },
   })
 );
+app.use(passport.initialize());
+app.use(passport.session());
 
 // main routes
 app.use(routes);
 
-app.get("/", (request, response) => {
-  // sending cookies
-  console.log(request.session);
-  console.log(request.session.id);
-  request.session.visited = true; // custom property set to session object
-  console.log(request.session);
-  response.cookie("hello", "world", { maxAge: 30000, signed: true });
-  response.status(201).send({ msg: "Hello" });
+// serialisedUser function will be called for the first time
+app.post("/api/auth", passport.authenticate("local"), (request, response) => {
+  response.status(201).send({ msg: "successful" });
 });
 
-// fake authenticaton using session data and Id.
-app.post("/api/auth", (request, response) => {
-  const {
-    body: { username, password },
-  } = request;
-  const findUser = mockUsersConstants.find(
-    (user) => user.username === username
-  );
-  // 401 stands for unauthenticate
-  if (!findUser || findUser.password !== password)
-    return response.status(401).send({ msg: "BAD CREDENTIALS" });
-
-  // dynamic property which is gonna be added to session object and it will modify the session object and its Id will never be changed.
-  request.session.user = findUser;
-
-  return response.status(200).send(findUser);
-});
-
-// authenticated status of the user which is done through using session object
+// deserializedUser function will be called from saved session data from the request object
 app.get("/api/auth/status", (request, response) => {
-  request.sessionStore.get(request.sessionID, (err, session) => {
-    console.log(session);
-  });
-  return request.session.user
-    ? response.status(200).send(request.session.user)
-    : response.status(401).send({ msg: "Not Authenticated" });
-});
+  console.log(`Inside api/auth/status`);
+  console.log(request.user);
 
-app.post("/api/cart", (request, response) => {
-  if (!request.session.user) return response.sendStatus(401);
-
-  const { body: item } = request;
-
-  const { cart } = request.session;
-  if (cart) {
-    cart.push(item);
-  } else {
-    request.session.cart = [item];
-  }
-  return response.status(201).send(item);
-});
-
-app.get("/api/cart", (request, response) => {
-  if (!request.session.user) return response.sendStatus(401);
-
-  return response.send(request.session.cart ?? []);
+  return response.sendStatus(200);
 });
 
 app.listen(PORT, () => {
