@@ -9,7 +9,7 @@ passport.serializeUser((user, done) => {
   done(null, user.id); //the argument of done function ->user.id(unique)
 });
 passport.deserializeUser((id, done) => {
-  console.log(`Indise Deserializer`);
+  console.log(`Inside DeserializeUser`);
   console.log(`Deserializing User Id: ${id}`);
   try {
     const findUser = mockUsersConstants.find((user) => user.id === id);
